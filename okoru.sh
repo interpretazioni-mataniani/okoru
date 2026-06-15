@@ -31,14 +31,16 @@ WHITE='\033[0;37m'
 GRAY='\033[1;37m'
 STOP="\e[0m"
 
-# If passed from calling script, run in verbose mode (enables debug logging level)
-VERBOSE="$VERBOSE"
-
+# Default VERBOSE and LOG to empty so sourcing scripts using set -u don't get
+# unbound variable errors. VERBOSE=1 enables debug logging; LOG is set by logging().
+VERBOSE="${VERBOSE:-}"
+LOG="${LOG:-/dev/null}"
+LOG_OPT="${LOG_OPT:-}"
 
 #If a function calls 'logging' for a log, it will create a log file; otherwise, keep the
 #+variable empty thus printing only to terminal
 logging () {
-	if [[ -n $2 ]]; then
+	if [[ -n ${2:-} ]]; then
 		if [[ ! -d "/var/log/okori/$1/" ]]; then
 			mkdir -p "/var/log/okori/$1/"
 		fi
@@ -79,11 +81,10 @@ logging () {
 if [[ -n $VERBOSE ]]; then
 	#Debugging level logging; can be toggled via a switch
 	debug () {
-		if [[ -z $2 ]]; then
+		if [[ -z ${2:-} ]]; then
 			printf "${PURPLE}$(date +"%T:%N")${STOP} ${BLUE}[DEBUG]:   %s${STOP}\n" "$1" $LOG_OPT
-		elif [[ -n $2 ]]; then
-			printf "${PURPLE}$(date +"%T:%N")${STOP} ${BLUE}[DEBUG]:   %s${STOP} ${LIGHT_BLUE}%s${STOP}\n" "$1" "$2" $LOG_OPT
-
+		else
+			printf "${PURPLE}$(date +"%T:%N")${STOP} ${BLUE}[DEBUG]:   %s${STOP} ${LIGHT_BLUE}%s${STOP}\n" "$1" "${2:-}" $LOG_OPT
 		fi | tee -a $LOG
 	}
 #Otherwise, ignore debug calls;
@@ -93,30 +94,30 @@ else
 	}
 fi
 
-#Information level logging; 
+#Information level logging;
 info () {
-	if [[ -z $2 ]]; then
+	if [[ -z ${2:-} ]]; then
 		printf "${PURPLE}$(date +"%T:%N")${STOP} ${CYAN}[INFO]:${STOP}    %s\n" "$1" $LOG_OPT
-	elif [[ -n $2 ]]; then
-		printf "${PURPLE}$(date +"%T:%N")${STOP} ${CYAN}[INFO]:${STOP}    %s ${LIGHT_CYAN}%s${STOP}\n" "$1" "$2" $LOG_OPT
+	else
+		printf "${PURPLE}$(date +"%T:%N")${STOP} ${CYAN}[INFO]:${STOP}    %s ${LIGHT_CYAN}%s${STOP}\n" "$1" "${2:-}" $LOG_OPT
 	fi | tee -a $LOG
 }
 
 #Warning level logging;
 warn () {
-	if [[ -z $2 ]]; then
+	if [[ -z ${2:-} ]]; then
 		printf "${PURPLE}$(date +"%T:%N")${STOP} ${ORANGE}[WARNING]:${STOP} %s\n" "$1" $LOG_OPT
-	elif [[ -n $2 ]]; then
-		printf "${PURPLE}$(date +"%T:%N")${STOP} ${ORANGE}[WARNING]:${STOP} %s ${YELLOW}%s${STOP}\n" "$1" "$2" $LOG_OPT
+	else
+		printf "${PURPLE}$(date +"%T:%N")${STOP} ${ORANGE}[WARNING]:${STOP} %s ${YELLOW}%s${STOP}\n" "$1" "${2:-}" $LOG_OPT
 	fi | tee -a $LOG
 }
 
 #Error level logging; errors are added to an array scripts can later recall
 error () {
-	if [[ -z $2 ]]; then
+	if [[ -z ${2:-} ]]; then
 		printf "${PURPLE}$(date +"%T:%N")${STOP} ${RED}[ERROR]:   %s${STOP}\n" "$1" $LOG_OPT
-	elif [[ -n $2 ]]; then
-		printf "${PURPLE}$(date +"%T:%N")${STOP} ${RED}[ERROR]:   %s${STOP}${LIGHT_RED} %s${STOP}\n" "$1" "$2" $LOG_OPT
+	else
+		printf "${PURPLE}$(date +"%T:%N")${STOP} ${RED}[ERROR]:   %s${STOP}${LIGHT_RED} %s${STOP}\n" "$1" "${2:-}" $LOG_OPT
 	fi | tee -a $LOG
         errors+=("$1")
         return 1
@@ -124,10 +125,10 @@ error () {
 
 #Success level logging;
 ok () {
-	if [[ -z $2 ]]; then
+	if [[ -z ${2:-} ]]; then
 		printf "${PURPLE}$(date +"%T:%N")${STOP} ${GREEN}[SUCCESS]: %s${STOP}\n" "$1" $LOG_OPT
-	elif [[ -n $2 ]]; then
-		printf "${PURPLE}$(date +"%T:%N")${STOP} ${GREEN}[SUCCESS]: %s${STOP}${LIGHT_GREEN} %s${STOP}\n" "$1" "$2" $LOG_OPT
+	else
+		printf "${PURPLE}$(date +"%T:%N")${STOP} ${GREEN}[SUCCESS]: %s${STOP}${LIGHT_GREEN} %s${STOP}\n" "$1" "${2:-}" $LOG_OPT
 	fi | tee -a $LOG
 }
 

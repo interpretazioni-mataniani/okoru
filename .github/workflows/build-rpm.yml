@@ -1,0 +1,32 @@
+name: Build RPM
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: sudo apt-get install -y rpm
+
+      - name: Set up rpmbuild tree
+        run: mkdir -p $HOME/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+
+      - name: Build okoru RPM
+        run: |
+          cp okoru.sh $HOME/rpmbuild/SOURCES/
+          cp okoru.spec $HOME/rpmbuild/SPECS/
+          rpmbuild -bb $HOME/rpmbuild/SPECS/okoru.spec
+
+      - name: Upload RPM to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ~/rpmbuild/RPMS/noarch/*.rpm
