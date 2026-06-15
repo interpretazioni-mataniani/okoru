@@ -12,24 +12,30 @@ declare -a errors=()
 #+Ex: /var/log/okori/testytest/testytest.
 #+These files can then be pulled, renamed and compressed on an Ansible node.
 
-#Color output#
-BLACK='\033[0;30m'
-DARK_GRAY='\033[1;30m'
-RED='\033[0;31m'
-LIGHT_RED='\033[1;31m'
-GREEN='\033[0;32m'
-LIGHT_GREEN='\033[1;32m'
-ORANGE='\033[0;33m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-LIGHT_BLUE='\033[1;34m'
-PURPLE='\033[0;35m'
-LIGHT_PURPLE='\033[1;35m'
-CYAN='\033[0;36m'
-LIGHT_CYAN='\033[1;36m'
-WHITE='\033[0;37m'
-GRAY='\033[1;37m'
-STOP="\e[0m"
+#Color output — suppressed when stdout is not a terminal (e.g. systemd, cron)
+if [[ -t 1 ]]; then
+    BLACK='\033[0;30m'
+    DARK_GRAY='\033[1;30m'
+    RED='\033[0;31m'
+    LIGHT_RED='\033[1;31m'
+    GREEN='\033[0;32m'
+    LIGHT_GREEN='\033[1;32m'
+    ORANGE='\033[0;33m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[0;34m'
+    LIGHT_BLUE='\033[1;34m'
+    PURPLE='\033[0;35m'
+    LIGHT_PURPLE='\033[1;35m'
+    CYAN='\033[0;36m'
+    LIGHT_CYAN='\033[1;36m'
+    WHITE='\033[0;37m'
+    GRAY='\033[1;37m'
+    STOP="\e[0m"
+else
+    BLACK='' DARK_GRAY='' RED='' LIGHT_RED='' GREEN='' LIGHT_GREEN=''
+    ORANGE='' YELLOW='' BLUE='' LIGHT_BLUE='' PURPLE='' LIGHT_PURPLE=''
+    CYAN='' LIGHT_CYAN='' WHITE='' GRAY='' STOP=''
+fi
 
 # Default VERBOSE and LOG to empty so sourcing scripts using set -u don't get
 # unbound variable errors. VERBOSE=1 enables debug logging; LOG is set by logging().
