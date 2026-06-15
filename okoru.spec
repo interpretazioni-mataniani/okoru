@@ -1,5 +1,5 @@
 Name:           okoru
-Version:        1.0.0
+Version:        1.0.2
 Release:        1%{?dist}
 Summary:        Bash logging library with colored, leveled output
 License:        MIT
@@ -21,5 +21,8 @@ install -Dm644 %{SOURCE0} %{buildroot}%{_datadir}/okoru/okoru.sh
 %{_datadir}/okoru/okoru.sh
 
 %changelog
+* Mon Jun 15 2026 Matan Horovitz - 1.0.2-1
+- Suppress color codes when stdout is not a terminal
+
 * Mon Jun 15 2026 Matan Horovitz - 1.0.0-1
 - Initial package
