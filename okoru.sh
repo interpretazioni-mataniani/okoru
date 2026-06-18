@@ -1,16 +1,15 @@
 #!/bin/bash
-##This script is a helper script defining universal functions to be used in other scripts -
-#+namely logging levels error reporting.
-#+The idea is to source it in other scripts and thus have them all log the same.
+# Okoru — bash logging library. Source this file; do not execute it directly.
+# Provides: debug, info, warn, error, ok — each accepts 1-2 string arguments.
+# Optional: call logging() to enable file output to /var/log/okoru/<name>/.
 
-#Error array for scripts that report runtime errors
+# Accumulates error() messages; scripts can inspect $errors[] after running.
 declare -a errors=()
 
-#Function to create inital log; Accepts the prefix of the log and folder.
-#+For example, passing logging testytest will create the folder /var/log/okori/testytest
-#+As well as a log file named testytest_Log and a report named testytest_[script_run_time]
-#+Ex: /var/log/okori/testytest/testytest.
-#+These files can then be pulled, renamed and compressed on an Ansible node.
+# logging <name> [prefix]
+#   Creates /var/log/okoru/<name>/ and opens a log file there.
+#   Previous log is timestamped and gzipped automatically.
+#   Must be called before the first log statement to enable file output.
 
 #Color output — suppressed when stdout is not a terminal (e.g. systemd, cron)
 if [[ -t 1 ]]; then
@@ -47,18 +46,18 @@ LOG_OPT="${LOG_OPT:-}"
 #+variable empty thus printing only to terminal
 logging () {
 	if [[ -n ${2:-} ]]; then
-		if [[ ! -d "/var/log/okori/$1/" ]]; then
-			mkdir -p "/var/log/okori/$1/"
+		if [[ ! -d "/var/log/okoru/$1/" ]]; then
+			mkdir -p "/var/log/okoru/$1/"
 		fi
-		export LOG="/var/log/okori/$1/$2Log"
-		export REPORT="/var/log/okori/$1/$2"
+		export LOG="/var/log/okoru/$1/$2Log"
+		export REPORT="/var/log/okoru/$1/$2"
 		export PREFIX=$2
 	else
-		if [[ ! -d "/var/log/okori/$1/" ]]; then
-			mkdir -p "/var/log/okori/$1/"
+		if [[ ! -d "/var/log/okoru/$1/" ]]; then
+			mkdir -p "/var/log/okoru/$1/"
 		fi
-		export LOG="/var/log/okori/$1/$1Log"
-		export REPORT="/var/log/okori/$1/$1"
+		export LOG="/var/log/okoru/$1/$1Log"
+		export REPORT="/var/log/okoru/$1/$1"
 		export PREFIX=$1
 	fi
 	if [[ -f "$LOG" ]]; then
@@ -66,7 +65,6 @@ logging () {
 		OLD_LOG_TIME=$(stat $LOG | grep Modify | awk '{print $3}' | sed -e 's/://g' | awk -F. '{print $1}')
 		mv "$LOG" "$(dirname $LOG)/$(basename $LOG)_"$OLD_LOG_DATE"_"$OLD_LOG_TIME"" 2> /dev/null 2>&1
 		gzip -f "$(dirname $LOG)/$(basename $LOG)_"$OLD_LOG_DATE"_"$OLD_LOG_TIME"" > /dev/null 2>&1
-#		^ Append timestamp (YYYYMMDD_HHMMSS - ex 20210301_093543) to log if it exists
 	fi
 	if [[ -f "$REPORT" ]]; then
 		OLD_REPORT_DATE=$(stat $REPORT | grep Modify | awk '{print $2}' | sed -e 's/-//g')
@@ -76,9 +74,8 @@ logging () {
 	fi
 	touch $LOG
 	touch $REPORT
-#Greeter
 	if [[ -n "$1" ]]; then
-		printf "Logging is ${GREEN}enabled${STOP} via Okori!\n"
+		printf "Logging is ${GREEN}enabled${STOP} via Okoru!\n"
 		printf "Log file: ${LIGHT_CYAN}$LOG\n${STOP}"
 	fi
 }
@@ -138,13 +135,12 @@ ok () {
 	fi | tee -a $LOG
 }
 
-# Same as logging function opener, for scripts that need to wrap things up nicely
+# end_logging — rotate and compress the current log file without starting a new one.
 end_logging () {
 	if [[ -f "$LOG" ]]; then
 		OLD_LOG_DATE=$(stat $LOG | grep Modify | awk '{print $2}' | sed -e 's/-//g')
 		OLD_LOG_TIME=$(stat $LOG | grep Modify | awk '{print $3}' | sed -e 's/://g' | awk -F. '{print $1}')
 		mv "$LOG" "$(dirname $LOG)/$(basename $LOG)_"$OLD_LOG_DATE"_"$OLD_LOG_TIME"" 2> /dev/null 2>&1
 		gzip -f "$(dirname $LOG)/$(basename $LOG)_"$OLD_LOG_DATE"_"$OLD_LOG_TIME"" > /dev/null 2>&1
-#		^ Append timestamp (YYYYMMDD_HHMMSS - ex 20210301_093543) to log if it exists
 	fi
 }
